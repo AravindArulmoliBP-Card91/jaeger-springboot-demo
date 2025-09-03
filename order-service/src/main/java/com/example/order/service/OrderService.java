@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class OrderService {
@@ -25,6 +26,9 @@ public class OrderService {
     
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+    
+    @Autowired
+    private AsyncNotificationService asyncNotificationService;
     
     @Value("${payment.service.url}")
     private String paymentServiceUrl;
@@ -79,6 +83,9 @@ public class OrderService {
                 // Update cache
                 redisTemplate.opsForValue().set(orderCacheKey, savedOrder, Duration.ofHours(24));
                 
+                // Trigger async operations - these will be traced automatically by OpenTelemetry
+                triggerAsyncPostProcessing(savedOrder);
+                
                 return new OrderResponse(
                     true,
                     "Order processed successfully",
@@ -116,5 +123,29 @@ public class OrderService {
         
         // Fetch from database
         return orderRepository.findById(orderId).orElse(null);
+    }
+    
+    /**
+     * Trigger async post-processing operations
+     * OpenTelemetry will automatically trace these async operations and maintain trace context
+     */
+    private void triggerAsyncPostProcessing(Order order) {
+        // Fire parallel async operations - all will be traced with proper parent-child relationships
+        CompletableFuture<Void> emailFuture = asyncNotificationService.sendEmailNotification(order);
+        CompletableFuture<String> smsFuture = asyncNotificationService.sendSmsNotification(order);
+        CompletableFuture<Void> auditFuture = asyncNotificationService.logOrderEvent(
+            order.getId(), "ORDER_COMPLETED", "Order successfully processed and payment confirmed"
+        );
+        
+        // Combine async operations (optional - for demonstration)
+        CompletableFuture.allOf(emailFuture, smsFuture, auditFuture)
+            .thenRun(() -> {
+                System.out.println("✅ All async post-processing completed for order: " + order.getId());
+            })
+            .exceptionally(throwable -> {
+                System.err.println("❌ Some async operations failed for order: " + order.getId() + 
+                                 " - " + throwable.getMessage());
+                return null;
+            });
     }
 }

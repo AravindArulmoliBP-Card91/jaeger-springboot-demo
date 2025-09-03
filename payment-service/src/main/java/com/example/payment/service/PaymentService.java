@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class PaymentService {
@@ -20,6 +21,9 @@ public class PaymentService {
     
     @Autowired
     private RestTemplate restTemplate;
+    
+    @Autowired
+    private AsyncFraudDetectionService asyncFraudDetectionService;
     
     @Value("${inventory.service.url}")
     private String inventoryServiceUrl;
@@ -56,6 +60,9 @@ public class PaymentService {
                 payment.setStatus("COMPLETED");
                 Payment savedPayment = paymentRepository.save(payment);
                 
+                // Trigger async fraud detection and risk scoring - traced automatically by OpenTelemetry
+                triggerAsyncFraudAnalysis(request);
+                
                 return new PaymentResponse(
                     true,
                     "Payment processed successfully",
@@ -87,5 +94,26 @@ public class PaymentService {
             Thread.currentThread().interrupt();
             return false;
         }
+    }
+    
+    /**
+     * Trigger async fraud analysis operations
+     * OpenTelemetry will automatically trace these async operations
+     */
+    private void triggerAsyncFraudAnalysis(PaymentRequest request) {
+        // Run parallel async fraud detection - both operations will be traced
+        CompletableFuture<Boolean> fraudCheckFuture = asyncFraudDetectionService.performFraudCheck(request);
+        CompletableFuture<Integer> riskScoreFuture = asyncFraudDetectionService.calculateRiskScore(request);
+        
+        // Combine results for logging (optional - demonstrates CompletableFuture composition)
+        fraudCheckFuture.thenCombine(riskScoreFuture, (isClean, riskScore) -> {
+            System.out.println("🔍 Fraud analysis completed for order " + request.getOrderId() + 
+                             " - Clean: " + isClean + ", Risk Score: " + riskScore);
+            return null;
+        }).exceptionally(throwable -> {
+            System.err.println("❌ Fraud analysis failed for order: " + request.getOrderId() + 
+                             " - " + throwable.getMessage());
+            return null;
+        });
     }
 }

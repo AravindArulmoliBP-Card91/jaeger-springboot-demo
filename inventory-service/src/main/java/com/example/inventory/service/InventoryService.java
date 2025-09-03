@@ -22,6 +22,9 @@ public class InventoryService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
     
+    @Autowired
+    private AsyncInventoryUpdateService asyncInventoryUpdateService;
+    
     @Transactional
     public ReservationResponse reserveInventory(ReservationRequest request) {
         Long productId = request.getProductId();
@@ -69,6 +72,9 @@ public class InventoryService {
             // Remove any negative cache entries
             redisTemplate.delete(cacheKey);
             
+            // Trigger async inventory management operations - traced automatically by OpenTelemetry
+            triggerAsyncInventoryOperations(productId, quantity);
+            
             return new ReservationResponse(
                 true, 
                 "Inventory reserved successfully", 
@@ -100,5 +106,30 @@ public class InventoryService {
         }
         
         return null;
+    }
+    
+    /**
+     * Trigger async inventory management operations
+     * OpenTelemetry will automatically trace these async operations
+     */
+    private void triggerAsyncInventoryOperations(Long productId, Integer reservedQuantity) {
+        // Low stock threshold check - fire and forget
+        asyncInventoryUpdateService.scheduleRestockNotification(productId, 10);
+        
+        // Analytics update - with result handling
+        asyncInventoryUpdateService.updateInventoryAnalytics(productId)
+            .thenAccept(result -> {
+                System.out.println("📊 " + result);
+            })
+            .exceptionally(throwable -> {
+                System.err.println("❌ Analytics update failed for product: " + productId + 
+                                 " - " + throwable.getMessage());
+                return null;
+            });
+        
+        // Supplier notification for low stock (fire and forget)
+        if (reservedQuantity > 5) { // If large quantity reserved, might need supplier notification
+            asyncInventoryUpdateService.notifySupplierLowStock(productId, "supplier@example.com");
+        }
     }
 }
