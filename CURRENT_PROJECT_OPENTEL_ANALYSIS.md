@@ -18,14 +18,11 @@ jaeger-demo/
 ├── opentelemetry-javaagent.jar           # 🔧 The magic JAR that does everything
 ├── docker-compose.yml                    # 🐳 Jaeger + service configuration
 ├── order-service/
-│   ├── Dockerfile                        # 🔧 Agent integration
-│   └── src/main/resources/application.yml # 🔧 Jackson config only
+│   └── Dockerfile                        # 🔧 Agent integration
 ├── payment-service/
-│   ├── Dockerfile                        # 🔧 Agent integration  
-│   └── src/main/resources/application.yml # 🔧 Jackson config only
+│   └── Dockerfile                        # 🔧 Agent integration  
 └── inventory-service/
-    ├── Dockerfile                        # 🔧 Agent integration
-    └── src/main/resources/application.yml # 🔧 Jackson config only
+    └── Dockerfile                        # 🔧 Agent integration
 ```
 
 **Notice**: No OpenTelemetry imports, no tracing code in any Java files!
