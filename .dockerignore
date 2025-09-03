@@ -1,0 +1,29 @@
+# Docker ignore file
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.vscode
+.idea
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test scripts
+test-services.sh
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
