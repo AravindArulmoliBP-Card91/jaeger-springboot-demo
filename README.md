@@ -30,6 +30,47 @@ order-service → payment-service → inventory-service
 - Java 21 (for local development)
 - Maven (for local development)
 
+## OpenTelemetry Java Agent Setup
+
+The project includes the OpenTelemetry Java agent (`opentelemetry-javaagent.jar`) for automatic instrumentation and distributed tracing. This agent is already included in the project root.
+
+### Agent Features
+- **Automatic instrumentation** for Spring Boot, JPA, Redis, HTTP clients, and more
+- **Zero-code configuration** - no manual tracing code required
+- **Performance monitoring** with minimal overhead
+- **Distributed tracing** across microservices
+
+### Agent Configuration
+The agent is configured via environment variables in `docker-compose.yml`:
+
+```yaml
+environment:
+  - OTEL_SERVICE_NAME=order-service
+  - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+  - OTEL_TRACES_EXPORTER=otlp
+  - OTEL_METRICS_EXPORTER=none
+  - OTEL_LOGS_EXPORTER=none
+```
+
+### Downloading the Agent (if needed)
+If you need to download a different version of the agent:
+
+```bash
+# Download the latest version
+curl -L -o opentelemetry-javaagent.jar \
+  https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
+
+# Or download a specific version (e.g., 1.32.0)
+curl -L -o opentelemetry-javaagent.jar \
+  https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.32.0/opentelemetry-javaagent.jar
+```
+
+### Agent Version
+The included agent version can be checked by running:
+```bash
+java -jar opentelemetry-javaagent.jar --version
+```
+
 ## Quick Start
 
 1. **Clone and navigate to the project directory**
@@ -208,6 +249,15 @@ The application uses Redis for:
 - Verify Jaeger is running: http://localhost:16686
 - Check service logs for OpenTelemetry agent errors
 - Ensure OTEL_EXPORTER_OTLP_ENDPOINT is correctly configured
+- Verify the agent JAR file exists and is accessible
+- Check that the agent is being loaded (look for "OpenTelemetry Java agent" in startup logs)
+
+### OpenTelemetry Agent Issues
+- **Agent not loading**: Ensure the JAR file path is correct and the file is not corrupted
+- **No traces generated**: Verify OTEL_SERVICE_NAME is set correctly for each service
+- **Connection errors**: Check that Jaeger OTLP endpoint (port 4317) is accessible
+- **Performance impact**: The agent has minimal overhead, but monitor CPU/memory usage
+- **Version compatibility**: Ensure the agent version is compatible with your Java version
 
 ### Database connection errors
 - Wait for MySQL to fully initialize (check logs)
@@ -217,18 +267,82 @@ The application uses Redis for:
 
 To run services locally for development:
 
-1. Start infrastructure:
-   ```bash
-   docker-compose up mysql redis jaeger
-   ```
+### 1. Start Infrastructure Services
+```bash
+docker-compose up mysql redis jaeger
+```
 
-2. Run each service with the OpenTelemetry agent:
-   ```bash
-   java -javaagent:opentelemetry-javaagent.jar \
-        -Dotel.service.name=order-service \
-        -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
-        -jar order-service/target/order-service-1.0.0.jar
-   ```
+### 2. Build the Services
+```bash
+# Build all services
+mvn clean package -DskipTests
+
+# Or build individual services
+cd order-service && mvn clean package -DskipTests
+cd ../payment-service && mvn clean package -DskipTests
+cd ../inventory-service && mvn clean package -DskipTests
+```
+
+### 3. Run Services with OpenTelemetry Agent
+
+#### Order Service
+```bash
+java -javaagent:opentelemetry-javaagent.jar \
+     -Dotel.service.name=order-service \
+     -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
+     -Dotel.traces.exporter=otlp \
+     -Dotel.metrics.exporter=none \
+     -Dotel.logs.exporter=none \
+     -jar order-service/target/order-service-1.0.0.jar
+```
+
+#### Payment Service
+```bash
+java -javaagent:opentelemetry-javaagent.jar \
+     -Dotel.service.name=payment-service \
+     -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
+     -Dotel.traces.exporter=otlp \
+     -Dotel.metrics.exporter=none \
+     -Dotel.logs.exporter=none \
+     -jar payment-service/target/payment-service-1.0.0.jar
+```
+
+#### Inventory Service
+```bash
+java -javaagent:opentelemetry-javaagent.jar \
+     -Dotel.service.name=inventory-service \
+     -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
+     -Dotel.traces.exporter=otlp \
+     -Dotel.metrics.exporter=none \
+     -Dotel.logs.exporter=none \
+     -jar inventory-service/target/inventory-service-1.0.0.jar
+```
+
+### 4. Alternative: Using Environment Variables
+You can also set the OpenTelemetry configuration via environment variables:
+
+```bash
+export OTEL_SERVICE_NAME=order-service
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_METRICS_EXPORTER=none
+export OTEL_LOGS_EXPORTER=none
+
+java -javaagent:opentelemetry-javaagent.jar \
+     -jar order-service/target/order-service-1.0.0.jar
+```
+
+### 5. IDE Configuration
+For IntelliJ IDEA or Eclipse, add the following JVM arguments to your run configuration:
+
+```
+-javaagent:/path/to/opentelemetry-javaagent.jar
+-Dotel.service.name=order-service
+-Dotel.exporter.otlp.endpoint=http://localhost:4317
+-Dotel.traces.exporter=otlp
+-Dotel.metrics.exporter=none
+-Dotel.logs.exporter=none
+```
 
 ## Cleanup
 
