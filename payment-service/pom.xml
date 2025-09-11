@@ -54,10 +54,10 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         
-        <!-- OpenTelemetry Logback Appender for log-trace correlation -->
+        <!-- OpenTelemetry Logback MDC for log-trace correlation -->
         <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
-            <artifactId>opentelemetry-logback-appender-1.0</artifactId>
+            <artifactId>opentelemetry-logback-mdc-1.0</artifactId>
             <version>1.32.0-alpha</version>
         </dependency>
         

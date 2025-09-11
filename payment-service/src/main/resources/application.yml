@@ -51,6 +51,6 @@ logging:
     org.springframework.web: INFO
     io.opentelemetry: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{trace_id:-},%X{span_id:-}] %logger{36} - %msg%n"
   logback:
     config: classpath:logback-spring.xml
