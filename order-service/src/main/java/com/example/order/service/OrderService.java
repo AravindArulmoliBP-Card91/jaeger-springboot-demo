@@ -3,8 +3,6 @@ package com.example.order.service;
 import com.example.order.dto.*;
 import com.example.order.entity.Order;
 import com.example.order.repository.OrderRepository;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.common.Attributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,19 +39,8 @@ public class OrderService {
     
     @Transactional
     public OrderResponse processOrder(OrderRequest request) {
-        // Get current span to add events (logs will appear in Jaeger "Logs" tab)
-        Span currentSpan = Span.current();
-        
         logger.info("Starting order processing for customer: {}, productId: {}, quantity: {}", 
                    request.getCustomerName(), request.getProductId(), request.getQuantity());
-        
-        // Add span event for Jaeger "Logs" tab
-        currentSpan.addEvent("Starting order processing", 
-            Attributes.builder()
-                .put("customer.name", request.getCustomerName())
-                .put("product.id", request.getProductId())
-                .put("quantity", request.getQuantity())
-                .build());
         
         try {
             // Calculate total amount (simplified - using base price of $100 per product)
@@ -71,14 +58,6 @@ public class OrderService {
             order.setStatus("CREATED");
             Order savedOrder = orderRepository.save(order);
             logger.info("Order created successfully with ID: {} and status: {}", savedOrder.getId(), savedOrder.getStatus());
-            
-            // Add span event
-            currentSpan.addEvent("Order created successfully",
-                Attributes.builder()
-                    .put("order.id", savedOrder.getId())
-                    .put("order.status", savedOrder.getStatus())
-                    .put("total.amount", totalAmount.toString())
-                    .build());
             
             // Cache order information in Redis
             String orderCacheKey = "order:" + savedOrder.getId();
@@ -104,14 +83,6 @@ public class OrderService {
             logger.info("Initiating payment processing for order: {} with amount: {} via {}", 
                        savedOrder.getId(), totalAmount, request.getPaymentMethod());
             
-            // Add span event
-            currentSpan.addEvent("Initiating payment processing",
-                Attributes.builder()
-                    .put("order.id", savedOrder.getId())
-                    .put("payment.amount", totalAmount.toString())
-                    .put("payment.method", request.getPaymentMethod())
-                    .build());
-            
             ResponseEntity<PaymentResponse> paymentResponse = restTemplate.postForEntity(
                 paymentUrl, 
                 paymentRequest, 
@@ -121,14 +92,6 @@ public class OrderService {
             if (paymentResponse.getBody() != null && paymentResponse.getBody().isSuccess()) {
                 logger.info("Payment successful for order: {} with transaction ID: {}", 
                            savedOrder.getId(), paymentResponse.getBody().getTransactionId());
-                
-                // Add span event
-                currentSpan.addEvent("Payment successful",
-                    Attributes.builder()
-                        .put("order.id", savedOrder.getId())
-                        .put("transaction.id", paymentResponse.getBody().getTransactionId())
-                        .put("payment.status", "SUCCESS")
-                        .build());
                 
                 // Payment successful - update order status
                 savedOrder.setStatus("COMPLETED");
@@ -140,13 +103,6 @@ public class OrderService {
                 
                 // Trigger async operations - these will be traced automatically by OpenTelemetry
                 logger.info("Triggering async post-processing for order: {}", savedOrder.getId());
-                
-                // Add span event
-                currentSpan.addEvent("Triggering async post-processing",
-                    Attributes.builder()
-                        .put("order.id", savedOrder.getId())
-                        .put("async.operations", "email,sms,audit")
-                        .build());
                 
                 triggerAsyncPostProcessing(savedOrder);
                 
@@ -161,16 +117,6 @@ public class OrderService {
             } else {
                 logger.warn("Payment failed for order: {}", savedOrder.getId());
                 
-                // Add span event
-                String errorMessage = paymentResponse.getBody() != null ? 
-                    paymentResponse.getBody().getMessage() : "Payment processing failed";
-                currentSpan.addEvent("Payment failed",
-                    Attributes.builder()
-                        .put("order.id", savedOrder.getId())
-                        .put("payment.status", "FAILED")
-                        .put("error.message", errorMessage)
-                        .build());
-                
                 // Payment failed - update order status
                 savedOrder.setStatus("PAYMENT_FAILED");
                 orderRepository.save(savedOrder);
@@ -179,20 +125,14 @@ public class OrderService {
                 // Update cache
                 redisTemplate.opsForValue().set(orderCacheKey, savedOrder, Duration.ofHours(24));
                 
+                String errorMessage = paymentResponse.getBody() != null ? 
+                    paymentResponse.getBody().getMessage() : "Payment processing failed";
                 logger.error("Payment failure details: {}", errorMessage);
                 return new OrderResponse(false, "Order failed: " + errorMessage);
             }
             
         } catch (Exception e) {
             logger.error("Order processing failed with exception: {}", e.getMessage(), e);
-            
-            // Add span event for exception
-            currentSpan.addEvent("Order processing failed",
-                Attributes.builder()
-                    .put("error.type", e.getClass().getSimpleName())
-                    .put("error.message", e.getMessage())
-                    .build());
-            
             return new OrderResponse(false, "Order processing error: " + e.getMessage());
         }
     }

@@ -10,9 +10,14 @@
         </encoder>
     </appender>
     
-    <!-- OpenTelemetry Appender for log-trace correlation -->
-    <appender name="OTEL" class="io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender">
+    <!-- OpenTelemetry MDC Appender for trace context in logs -->
+    <appender name="OTEL_MDC" class="io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender">
         <appender-ref ref="CONSOLE"/>
+    </appender>
+    
+    <!-- Custom Auto Span Event Appender - converts logs to span events automatically -->
+    <appender name="AUTO_SPAN_EVENT" class="com.example.inventory.config.AutoSpanEventAppender">
+        <!-- This appender automatically adds log messages as span events -->
     </appender>
     
     <!-- File Appender for persistent logs -->
@@ -46,26 +51,26 @@
     
     <!-- Logger configurations -->
     <logger name="com.example.inventory" level="INFO" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="OTEL"/>
+        <appender-ref ref="OTEL_MDC"/>
+        <appender-ref ref="AUTO_SPAN_EVENT"/>
         <appender-ref ref="FILE"/>
     </logger>
     
     <logger name="org.springframework.web" level="INFO" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="OTEL"/>
+        <appender-ref ref="OTEL_MDC"/>
+        <appender-ref ref="AUTO_SPAN_EVENT"/>
         <appender-ref ref="FILE"/>
     </logger>
     
     <logger name="io.opentelemetry" level="DEBUG" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="OTEL"/>
+        <appender-ref ref="OTEL_MDC"/>
         <appender-ref ref="FILE"/>
     </logger>
     
     <!-- Root logger -->
     <root level="INFO">
-        <appender-ref ref="OTEL"/>
+        <appender-ref ref="OTEL_MDC"/>
+        <appender-ref ref="AUTO_SPAN_EVENT"/>
         <appender-ref ref="FILE"/>
     </root>
 </configuration>
