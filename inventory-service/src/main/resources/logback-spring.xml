@@ -2,13 +2,7 @@
 <configuration>
     <!-- Include Spring Boot's default logback configuration -->
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    
-    <!-- Console Appender with trace context -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{trace_id:-},%X{span_id:-}] %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
     
     <!-- OpenTelemetry MDC Appender for trace context in logs -->
     <appender name="OTEL_MDC" class="io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender">
@@ -20,57 +14,25 @@
         <!-- This appender automatically adds log messages as span events -->
     </appender>
     
-    <!-- File Appender for persistent logs -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/inventory-service.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/inventory-service.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp/>
-                <logLevel/>
-                <loggerName/>
-                <message/>
-                <mdc/>
-                <stackTrace/>
-                <pattern>
-                    <pattern>
-                        {
-                            "service": "inventory-service",
-                            "traceId": "%X{traceId:-}",
-                            "spanId": "%X{spanId:-}",
-                            "thread": "%thread"
-                        }
-                    </pattern>
-                </pattern>
-            </providers>
-        </encoder>
-    </appender>
     
     <!-- Logger configurations -->
     <logger name="com.example.inventory" level="INFO" additivity="false">
         <appender-ref ref="OTEL_MDC"/>
         <appender-ref ref="AUTO_SPAN_EVENT"/>
-        <appender-ref ref="FILE"/>
     </logger>
     
     <logger name="org.springframework.web" level="INFO" additivity="false">
         <appender-ref ref="OTEL_MDC"/>
         <appender-ref ref="AUTO_SPAN_EVENT"/>
-        <appender-ref ref="FILE"/>
     </logger>
     
     <logger name="io.opentelemetry" level="DEBUG" additivity="false">
         <appender-ref ref="OTEL_MDC"/>
-        <appender-ref ref="FILE"/>
     </logger>
     
     <!-- Root logger -->
     <root level="INFO">
         <appender-ref ref="OTEL_MDC"/>
         <appender-ref ref="AUTO_SPAN_EVENT"/>
-        <appender-ref ref="FILE"/>
     </root>
 </configuration>
