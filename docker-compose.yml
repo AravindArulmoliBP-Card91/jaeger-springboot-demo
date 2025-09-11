@@ -58,8 +58,11 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=inventory-service,service.version=1.0.0
       - OTEL_INSTRUMENTATION_EXECUTORS_ENABLED=true
       - OTEL_INSTRUMENTATION_SPRING_INTEGRATION_ENABLED=true
-      # - OTEL_LOGS_EXPORTER=none
-      # - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_LOGS_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED=true
+      - OTEL_METRICS_EXPORTER=none
     ports:
       - "8082:8080"
     volumes:
@@ -91,8 +94,11 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=payment-service,service.version=1.0.0
       - OTEL_INSTRUMENTATION_EXECUTORS_ENABLED=true
       - OTEL_INSTRUMENTATION_SPRING_INTEGRATION_ENABLED=true
-      # - OTEL_LOGS_EXPORTER=none
-      # - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_LOGS_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED=true
+      - OTEL_METRICS_EXPORTER=none
     ports:
       - "8081:8080"
     volumes:
@@ -126,8 +132,11 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=order-service,service.version=1.0.0
       - OTEL_INSTRUMENTATION_EXECUTORS_ENABLED=true
       - OTEL_INSTRUMENTATION_SPRING_INTEGRATION_ENABLED=true
-      # - OTEL_LOGS_EXPORTER=none
-      # - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_LOGS_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED=true
+      - OTEL_METRICS_EXPORTER=none
     ports:
       - "8080:8080"
     volumes:

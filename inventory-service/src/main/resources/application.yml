@@ -44,3 +44,8 @@ logging:
   level:
     com.example.inventory: INFO
     org.springframework.web: INFO
+    io.opentelemetry: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  logback:
+    config: classpath:logback-spring.xml
