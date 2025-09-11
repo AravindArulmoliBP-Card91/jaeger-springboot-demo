@@ -54,6 +54,12 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         
+        <!-- OpenTelemetry API for span events -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+        </dependency>
+        
         <!-- OpenTelemetry Logback MDC for log-trace correlation -->
         <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
