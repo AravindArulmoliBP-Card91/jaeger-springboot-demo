@@ -77,15 +77,14 @@ curl -L -o opentelemetry-javaagent.jar \
 
 ## Application Configuration
 
-### 1. Maven Dependencies
+### 1. Gradle Dependencies
 
 Add Jackson JSR310 support to handle LocalDateTime serialization (if using Redis caching):
 
-```xml
-<dependency>
-    <groupId>com.fasterxml.jackson.datatype</groupId>
-    <artifactId>jackson-datatype-jsr310</artifactId>
-</dependency>
+```gradle
+dependencies {
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+}
 ```
 
 ### 2. Application Properties
@@ -144,16 +143,18 @@ Modify your service Dockerfiles to include the OpenTelemetry agent in the entryp
 FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
-COPY pom.xml .
+COPY build.gradle .
+COPY settings.gradle .
+COPY gradle/ ./gradle/
 COPY src ./src
 
-RUN apk add --no-cache maven
-RUN mvn clean package -DskipTests
+RUN apk add --no-cache gradle
+RUN ./gradlew build -x test
 
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
-COPY --from=build /app/target/your-service-1.0.0.jar app.jar
+COPY --from=build /app/build/libs/your-service-1.0.0.jar app.jar
 
 EXPOSE 8080
 

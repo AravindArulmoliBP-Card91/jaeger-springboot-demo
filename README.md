@@ -28,7 +28,7 @@ order-service → payment-service → inventory-service
 
 - Docker and Docker Compose
 - Java 21 (for local development)
-- Maven (for local development)
+- Gradle (for local development)
 
 ## OpenTelemetry Java Agent Setup
 
@@ -275,12 +275,12 @@ docker-compose up mysql redis jaeger
 ### 2. Build the Services
 ```bash
 # Build all services
-mvn clean package -DskipTests
+./gradlew build -x test
 
 # Or build individual services
-cd order-service && mvn clean package -DskipTests
-cd ../payment-service && mvn clean package -DskipTests
-cd ../inventory-service && mvn clean package -DskipTests
+cd order-service && ./gradlew build -x test
+cd ../payment-service && ./gradlew build -x test
+cd ../inventory-service && ./gradlew build -x test
 ```
 
 ### 3. Run Services with OpenTelemetry Agent
@@ -293,7 +293,7 @@ java -javaagent:opentelemetry-javaagent.jar \
      -Dotel.traces.exporter=otlp \
      -Dotel.metrics.exporter=none \
      -Dotel.logs.exporter=none \
-     -jar order-service/target/order-service-1.0.0.jar
+     -jar order-service/build/libs/order-service-1.0.0.jar
 ```
 
 #### Payment Service
@@ -304,7 +304,7 @@ java -javaagent:opentelemetry-javaagent.jar \
      -Dotel.traces.exporter=otlp \
      -Dotel.metrics.exporter=none \
      -Dotel.logs.exporter=none \
-     -jar payment-service/target/payment-service-1.0.0.jar
+     -jar payment-service/build/libs/payment-service-1.0.0.jar
 ```
 
 #### Inventory Service
@@ -315,7 +315,7 @@ java -javaagent:opentelemetry-javaagent.jar \
      -Dotel.traces.exporter=otlp \
      -Dotel.metrics.exporter=none \
      -Dotel.logs.exporter=none \
-     -jar inventory-service/target/inventory-service-1.0.0.jar
+     -jar inventory-service/build/libs/inventory-service-1.0.0.jar
 ```
 
 ### 4. Alternative: Using Environment Variables
@@ -329,7 +329,7 @@ export OTEL_METRICS_EXPORTER=none
 export OTEL_LOGS_EXPORTER=none
 
 java -javaagent:opentelemetry-javaagent.jar \
-     -jar order-service/target/order-service-1.0.0.jar
+     -jar order-service/build/libs/order-service-1.0.0.jar
 ```
 
 ### 5. IDE Configuration

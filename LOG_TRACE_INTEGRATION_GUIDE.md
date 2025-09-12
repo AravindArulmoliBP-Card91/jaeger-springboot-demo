@@ -12,7 +12,7 @@ This guide documents the complete implementation of log-trace correlation for Sp
 
 ## 📁 Files Modified
 
-### 1. Maven Dependencies (`pom.xml`)
+### 1. Gradle Dependencies (`build.gradle`)
 **Added to all three services:**
 - `opentelemetry-logback-appender-1.0` - Log-trace correlation
 - `logstash-logback-encoder` - Structured JSON logging
