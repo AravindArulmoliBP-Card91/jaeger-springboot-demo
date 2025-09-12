@@ -1,17 +1,22 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+# ---------- Build & Run Stage (single stage) ----------
+FROM gradle:9.0.0-jdk21-alpine
 
 WORKDIR /app
-COPY pom.xml .
+
+# 1. Copy only build scripts first to cache dependencies
+COPY build.gradle settings.gradle ./
+
+# Pre-download dependencies (caches between builds unless build.gradle changes)
+RUN gradle dependencies --no-daemon || return 0
+
+# 2. Copy source code
 COPY src ./src
 
-RUN apk add --no-cache maven
-RUN mvn clean package -DskipTests
+# Build the fat JAR (skip tests for dev speed)
+RUN gradle clean bootJar -x test --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine
-
-WORKDIR /app
-COPY --from=build /app/target/payment-service-1.0.0.jar app.jar
-
+# Expose dev port
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-jar", "app.jar"]
+# Run the app directly
+ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-jar", "build/libs/app.jar"]

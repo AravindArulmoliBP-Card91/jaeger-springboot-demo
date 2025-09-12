@@ -1,0 +1,48 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.4'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '1.0.0'
+description = 'Order Service for Microservices Demo'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // OpenTelemetry API for span events
+    implementation 'io.opentelemetry:opentelemetry-api'
+
+    // OpenTelemetry Logback MDC for log-trace correlation
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0:1.32.0-alpha'
+
+    // Structured Logging Support
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+    runtimeOnly 'mysql:mysql-connector-java:8.0.33'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.named("bootJar") {
+    archiveFileName.set("app.jar")
+}
