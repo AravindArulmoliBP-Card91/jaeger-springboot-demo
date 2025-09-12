@@ -2,6 +2,9 @@ package com.example.inventory.service;
 
 import com.example.inventory.entity.Inventory;
 import com.example.inventory.repository.InventoryRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -12,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 public class AsyncInventoryUpdateService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(AsyncInventoryUpdateService.class);
     
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -44,7 +49,7 @@ public class AsyncInventoryUpdateService {
                 // Update notification counter
                 redisTemplate.opsForValue().increment("restock:notifications:count", 1);
                 
-                System.out.println("📦 Restock notification scheduled for product " + productId);
+                logger.info("📦 Restock notification scheduled for product " + productId);
             }
             
         } catch (InterruptedException e) {
@@ -90,7 +95,7 @@ public class AsyncInventoryUpdateService {
                 
                 String result = "Analytics updated for product " + productId + " (turnover: " + 
                               String.format("%.1f%%", turnoverRate * 100) + ")";
-                System.out.println("📊 " + result);
+                logger.info("📊 " + result);
                 
                 return CompletableFuture.completedFuture(result);
             }
@@ -126,11 +131,11 @@ public class AsyncInventoryUpdateService {
             redisTemplate.opsForList().leftPush(historyKey, supplierData);
             redisTemplate.expire(historyKey, Duration.ofDays(90));
             
-            System.out.println("📧 Supplier notified: " + supplierEmail + " for product " + productId);
+            logger.info("📧 Supplier notified: " + supplierEmail + " for product " + productId);
             
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.err.println("Failed to notify supplier: " + e.getMessage());
+            logger.error("Failed to notify supplier: " + e.getMessage());
         }
     }
 }

@@ -169,10 +169,10 @@ public class OrderService {
         // Combine async operations (optional - for demonstration)
         CompletableFuture.allOf(emailFuture, smsFuture, auditFuture)
             .thenRun(() -> {
-                System.out.println("✅ All async post-processing completed for order: " + order.getId());
+                logger.info("✅ All async post-processing completed for order: " + order.getId());
             })
             .exceptionally(throwable -> {
-                System.err.println("❌ Some async operations failed for order: " + order.getId() + 
+                logger.error("❌ Some async operations failed for order: " + order.getId() + 
                                  " - " + throwable.getMessage());
                 return null;
             });

@@ -1,8 +1,10 @@
 package com.example.payment.service;
 
-import com.example.payment.dto.*;
-import com.example.payment.entity.Payment;
-import com.example.payment.repository.PaymentRepository;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -10,11 +12,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import com.example.payment.dto.PaymentRequest;
+import com.example.payment.dto.PaymentResponse;
+import com.example.payment.dto.ReservationRequest;
+import com.example.payment.dto.ReservationResponse;
+import com.example.payment.entity.Payment;
+import com.example.payment.repository.PaymentRepository;
 
 @Service
 public class PaymentService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     
     @Autowired
     private PaymentRepository paymentRepository;
@@ -107,11 +115,11 @@ public class PaymentService {
         
         // Combine results for logging (optional - demonstrates CompletableFuture composition)
         fraudCheckFuture.thenCombine(riskScoreFuture, (isClean, riskScore) -> {
-            System.out.println("🔍 Fraud analysis completed for order " + request.getOrderId() + 
+            logger.info("🔍 Fraud analysis completed for order " + request.getOrderId() + 
                              " - Clean: " + isClean + ", Risk Score: " + riskScore);
             return null;
         }).exceptionally(throwable -> {
-            System.err.println("❌ Fraud analysis failed for order: " + request.getOrderId() + 
+            logger.error("❌ Fraud analysis failed for order: " + request.getOrderId() + 
                              " - " + throwable.getMessage());
             return null;
         });

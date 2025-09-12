@@ -1,16 +1,21 @@
 package com.example.order.service;
 
-import com.example.order.entity.Order;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
+import com.example.order.entity.Order;
 
 @Service
 public class AsyncNotificationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AsyncNotificationService.class);
     
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -29,7 +34,7 @@ public class AsyncNotificationService {
             String notificationKey = "notification:email:" + order.getId();
             redisTemplate.opsForValue().set(notificationKey, "SENT", Duration.ofDays(7));
             
-            System.out.println("📧 Email notification sent for order: " + order.getId());
+            logger.info("📧 Email notification sent for order: " + order.getId());
             
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -54,7 +59,7 @@ public class AsyncNotificationService {
             redisTemplate.opsForValue().set(smsKey, "DELIVERED", Duration.ofDays(7));
             
             String message = "SMS sent for order " + order.getId();
-            System.out.println("📱 " + message);
+            logger.info("📱 " + message);
             
             return CompletableFuture.completedFuture(message);
             
@@ -81,7 +86,7 @@ public class AsyncNotificationService {
             
             redisTemplate.opsForValue().set(auditKey, auditData, Duration.ofDays(30));
             
-            System.out.println("📝 Audit logged: " + event + " for order " + orderId);
+            logger.info("📝 Audit logged: " + event + " for order " + orderId);
             
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

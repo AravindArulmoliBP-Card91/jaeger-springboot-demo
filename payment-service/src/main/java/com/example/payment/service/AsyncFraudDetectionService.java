@@ -1,16 +1,21 @@
 package com.example.payment.service;
 
-import com.example.payment.dto.PaymentRequest;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
+import com.example.payment.dto.PaymentRequest;
 
 @Service
 public class AsyncFraudDetectionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AsyncFraudDetectionService.class);
     
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -41,7 +46,7 @@ public class AsyncFraudDetectionService {
             redisTemplate.opsForValue().increment(customerKey + ":count", 1);
             redisTemplate.expire(customerKey + ":count", Duration.ofDays(30));
             
-            System.out.println("🔍 Fraud check completed for order " + request.getOrderId() + ": " + result);
+            logger.info("🔍 Fraud check completed for order " + request.getOrderId() + ": " + result);
             
             return CompletableFuture.completedFuture(!isFraudulent);
             
@@ -84,7 +89,7 @@ public class AsyncFraudDetectionService {
             String scoreKey = "risk:score:" + request.getOrderId();
             redisTemplate.opsForValue().set(scoreKey, String.valueOf(riskScore), Duration.ofHours(24));
             
-            System.out.println("⚡ Risk score calculated for order " + request.getOrderId() + ": " + riskScore);
+            logger.info("⚡ Risk score calculated for order " + request.getOrderId() + ": " + riskScore);
             
             return CompletableFuture.completedFuture(riskScore);
             

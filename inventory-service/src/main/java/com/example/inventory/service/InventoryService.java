@@ -1,20 +1,25 @@
 package com.example.inventory.service;
 
-import com.example.inventory.dto.ReservationRequest;
-import com.example.inventory.dto.ReservationResponse;
-import com.example.inventory.entity.Inventory;
-import com.example.inventory.repository.InventoryRepository;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.util.Optional;
+import com.example.inventory.dto.ReservationRequest;
+import com.example.inventory.dto.ReservationResponse;
+import com.example.inventory.entity.Inventory;
+import com.example.inventory.repository.InventoryRepository;
 
 @Service
 public class InventoryService {
+
+    private static final Logger logger = LoggerFactory.getLogger(InventoryService.class);
     
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -119,10 +124,10 @@ public class InventoryService {
         // Analytics update - with result handling
         asyncInventoryUpdateService.updateInventoryAnalytics(productId)
             .thenAccept(result -> {
-                System.out.println("📊 " + result);
+                logger.info("📊 " + result);
             })
             .exceptionally(throwable -> {
-                System.err.println("❌ Analytics update failed for product: " + productId + 
+                logger.error("❌ Analytics update failed for product: " + productId + 
                                  " - " + throwable.getMessage());
                 return null;
             });
